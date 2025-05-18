@@ -1,29 +1,20 @@
-name: Deploy tanvi-web to Kubernetes
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: [self-hosted, Linux, X64]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Kubeconfig
-      run: |
-        mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/.kube/config
-        chmod 600 $HOME/.kube/config
-        export KUBECONFIG=$HOME/.kube/config
-        kubectl version --client
-
-    - name: Deploy to Kubernetes
-      run: |
-        export KUBECONFIG=$HOME/.kube/config
-        kubectl apply -f manifest/
-        kubectl rollout status deployment/tanvi-web
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tanvi-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tanvi-web
+  template:
+    metadata:
+      labels:
+        app: tanvi-web
+    spec:
+      containers:
+        - name: tanvi-web
+          image: tanvi-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
