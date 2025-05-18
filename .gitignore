@@ -1,0 +1,23 @@
+# Ignore Kubernetes config files
+*.kube/config
+kubeconfig
+kubeconfig.yaml
+kubeconfig-embedded
+kubeconfig-encoded.txt
+
+# Ignore GitHub runner config
+actions-runner/
+.github/workflows/kubeconfig*
+
+# Ignore Docker and system files
+*.log
+*.tmp
+*.swp
+.env
+.DS_Store
+
+# Node / Python / Build outputs (optional, depending on your stack)
+node_modules/
+__pycache__/
+dist/
+build/
