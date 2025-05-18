@@ -1,0 +1,24 @@
+name: Deploy to Kubernetes (Self-Hosted)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 --decode > $HOME/.kube/config
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f manifest/
+        kubectl rollout status deployment/sample-app
