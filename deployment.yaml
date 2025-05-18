@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tanvi-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tanvi-web
+  template:
+    metadata:
+      labels:
+        app: tanvi-web
+    spec:
+      containers:
+        - name: tanvi-web
+          image: YOUR_DOCKERHUB_USERNAME/tanvi-web:latest
+          ports:
+            - containerPort: 80
