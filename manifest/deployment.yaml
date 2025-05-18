@@ -13,8 +13,8 @@ spec:
         app: tanvi-web
     spec:
       containers:
-        - name: tanvi-web
-          image: tanvi-web:latest
-          imagePullPolicy: IfNotPresent
+        - name: apache
+          image: httpd:latest
+          #imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
