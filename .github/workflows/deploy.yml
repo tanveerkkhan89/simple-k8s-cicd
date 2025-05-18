@@ -1,4 +1,4 @@
-name: Deploy to Kubernetes (Self-Hosted)
+name: Deploy to Kubernetes
 
 on:
   push:
@@ -6,19 +6,24 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: self-hosted
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    - name: Build Docker Image (local only)
+      run: |
+        docker build -t tanvi-web:latest .
+
     - name: Set up Kubeconfig
       run: |
         mkdir -p $HOME/.kube
         echo "${{ secrets.KUBECONFIG }}" | base64 --decode > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
 
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f manifest/
-        kubectl rollout status deployment/sample-app
+        kubectl rollout status deployment/tanvi-web

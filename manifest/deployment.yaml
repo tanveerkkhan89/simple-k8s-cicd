@@ -14,6 +14,7 @@ spec:
     spec:
       containers:
         - name: tanvi-web
-          image: YOUR_DOCKERHUB_USERNAME/tanvi-web:latest
+          image: tanvi-web:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
