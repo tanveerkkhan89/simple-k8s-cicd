@@ -12,9 +12,11 @@ spec:
       labels:
         app: tanvi-python-app
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: master
       containers:
       - name: web
         image: tanvi-python-app:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 80
-
