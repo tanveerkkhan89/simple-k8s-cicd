@@ -28,4 +28,4 @@ jobs:
 
     - name: Build Docker image using nerdctl
       run: |
-        nerdctl build -t tanvi-python-app:latest .
+        sudo nerdctl build -t tanvi-python-app:latest .
