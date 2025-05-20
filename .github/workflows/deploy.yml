@@ -1,4 +1,4 @@
-name: Deploy to Kubernetes
+name: Deploy Python App to Kubernetes
 
 on:
   push:
@@ -17,13 +17,17 @@ jobs:
     - name: Set up Kubeconfig
       run: |
         mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+        echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
         export KUBECONFIG=$HOME/.kube/config
         kubectl version --client
 
+    - name: Build Docker image using nerdctl
+      run: |
+        nerdctl build -t tanvi-python-app:latest .
+
     - name: Deploy to Kubernetes
       run: |
         export KUBECONFIG=$HOME/.kube/config
-        kubectl apply -f manifest/deployment.yaml --validate=false
-        kubectl rollout status deployment/tanvi-web
+        kubectl apply -f manifest/ --validate=false
+        kubectl rollout status deployment/tanvi-python-app
