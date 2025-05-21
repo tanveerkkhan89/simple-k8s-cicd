@@ -14,9 +14,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up environment
+    - name: Check required secrets
       run: |
-        echo "PATH=$PATH:$HOME/bin" >> $GITHUB_ENV
+        test -n "${{ secrets.DOCKERHUB_USERNAME }}" || (echo "Missing DOCKERHUB_USERNAME" && exit 1)
+        test -n "${{ secrets.DOCKERHUB_PASSWORD }}" || (echo "Missing DOCKERHUB_PASSWORD" && exit 1)
+        test -n "${{ secrets.KUBECONFIG_DATA }}" || (echo "Missing KUBECONFIG_DATA" && exit 1)
+
+    - name: Set up environment
+      run: echo "PATH=$PATH:$HOME/bin" >> $GITHUB_ENV
 
     - name: Set up Kubeconfig
       run: |
@@ -43,3 +48,8 @@ jobs:
       run: |
         export KUBECONFIG=$HOME/.kube/config
         kubectl apply -f manifest/
+
+    - name: Verify Deployment
+      run: |
+        export KUBECONFIG=$HOME/.kube/config
+        kubectl rollout status deployment/tanvi-python-app-deployment
