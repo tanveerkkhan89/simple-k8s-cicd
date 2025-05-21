@@ -19,6 +19,7 @@ jobs:
         test -n "${{ secrets.DOCKER_USERNAME }}" || (echo "Missing DOCKER_USERNAME" && exit 1)
         test -n "${{ secrets.DOCKER_PASSWORD }}" || (echo "Missing DOCKER_PASSWORD" && exit 1)
         test -n "${{ secrets.KUBECONFIG_B64 }}" || (echo "Missing KUBECONFIG_B64" && exit 1)
+        test -n "${{ secrets.KUBECONFIG_DATA }}" || (echo "Missing KUBECONFIG_DATA" && exit 1)
 
     - name: Set up environment
       run: echo "PATH=$PATH:$HOME/bin" >> $GITHUB_ENV
@@ -26,7 +27,7 @@ jobs:
     - name: Set up Kubeconfig
       run: |
         mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBECONFIG_B64 }}" | base64 --decode > $HOME/.kube/config
+        echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
         export KUBECONFIG=$HOME/.kube/config
         kubectl version --client
