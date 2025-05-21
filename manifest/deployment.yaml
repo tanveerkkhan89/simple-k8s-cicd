@@ -16,7 +16,7 @@ spec:
         kubernetes.io/hostname: master
       containers:
       - name: web
-        image: tanvi-python-app:latest
-        imagePullPolicy: Never
+        image: tanvi-web:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
