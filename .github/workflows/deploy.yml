@@ -23,7 +23,7 @@ jobs:
 
     - name: Build with Maven
       run: mvn clean package
-      working-directory: ./java-hello-world-with-maven
+      working-directory: ./simple-k8s-cicd/java-hello-world-with-maven
 
 #    - name: Upload Artifact
 #      uses: actions/upload-artifact@v2
