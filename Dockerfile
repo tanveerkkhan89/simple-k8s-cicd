@@ -1,9 +1,3 @@
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY app/ .
-
-CMD ["python", "app.py"]
+FROM openjdk:11-jre-slim
+COPY target/simple-java-app-1.0-SNAPSHOT.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

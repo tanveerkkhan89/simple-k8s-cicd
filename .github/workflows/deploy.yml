@@ -1,4 +1,4 @@
-name: Deploy Python App to Kubernetes
+name: Java Maven CI Pipeline
 
 on:
   push:
@@ -7,50 +7,104 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
+    name: Build Maven Project
     runs-on: [self-hosted, Linux, X64]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Check required secrets
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Build with Maven
+      run: mvn clean package
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: java-build
+        path: |
+          target/*.jar
+          pom.xml
+
+  static-analysis:
+    name: Sonar + OWASP Check
+    runs-on: [self-hosted, Linux, X64]
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: SonarQube Scan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: >
+        mvn sonar:sonar
+        -Dsonar.projectKey=java-maven-ci
+        -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+        -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+    - name: OWASP Dependency Check
       run: |
-        test -n "${{ secrets.DOCKER_USERNAME }}" || (echo "Missing DOCKER_USERNAME" && exit 1)
-        test -n "${{ secrets.DOCKER_PASSWORD }}" || (echo "Missing DOCKER_PASSWORD" && exit 1)
-        test -n "${{ secrets.KUBECONFIG_B64 }}" || (echo "Missing KUBECONFIG_B64" && exit 1)
-        test -n "${{ secrets.KUBECONFIG_DATA }}" || (echo "Missing KUBECONFIG_DATA" && exit 1)
+        mkdir -p dependency-check
+        curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.10/dependency-check-9.0.10-release.zip
+        unzip -q dependency-check.zip -d dependency-check
+        dependency-check/dependency-check/bin/dependency-check.sh --project "java-maven-ci" --scan . --format "HTML"
 
-    - name: Set up environment
-      run: echo "PATH=$PATH:$HOME/bin" >> $GITHUB_ENV
+  image:
+    name: Build & Scan Docker Image
+    runs-on: [self-hosted, Linux, X64]
+    needs: build
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: java-build
+
+    - name: Build Docker Image
+      run: sudo nerdctl build -t java-maven-app:latest .
+
+    - name: Trivy Scan Docker Image
+      run: trivy image java-maven-app:latest
+
+    - name: Docker Login
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Docker Tag & Push
+      run: |
+        sudo nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+        sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: [self-hosted, Linux, X64]
+    needs: image
+
+    steps:
     - name: Set up Kubeconfig
       run: |
         mkdir -p $HOME/.kube
         echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
-        export KUBECONFIG=$HOME/.kube/config
         kubectl version --client
 
-    - name: Build Docker image using nerdctl
-      run: |
-        sudo nerdctl build -t tanvi-python-app:latest .
-
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-    - name: Tag Docker image
-      run: sudo nerdctl tag tanvi-python-app:latest ${{ secrets.DOCKER_USERNAME }}/tanvi-web:latest
-
-    - name: Push Docker image
-      run: sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/tanvi-web:latest
-
-    - name: Deploy to Kubernetes
+    - name: Deploy Manifest
       run: |
         export KUBECONFIG=$HOME/.kube/config
         kubectl apply -f manifest/
-
-    - name: Verify Deployment
-      run: |
-        export KUBECONFIG=$HOME/.kube/config
-        kubectl rollout status deployment/tanvi-python-app

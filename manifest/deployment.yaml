@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tanvi-python-app
+  name: java-maven-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tanvi-python-app
+      app: java-maven-app
   template:
     metadata:
       labels:
-        app: tanvi-python-app
+        app: java-maven-app
     spec:
       nodeSelector:
         kubernetes.io/hostname: master
       containers:
       - name: web
-        image: khatanve/tanvi-web:latest
+        image: khatanve/java-maven-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
