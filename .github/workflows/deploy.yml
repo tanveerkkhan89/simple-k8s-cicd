@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: java-hello-world-with-maven/dependency-check/report.html
+          path: dependency-report/dependency-check-report.html
 
   image:
     name: Build & Scan Docker Image
