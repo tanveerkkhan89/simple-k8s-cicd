@@ -12,68 +12,74 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive   # This ensures submodules are cloned & checked out
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
+      - name: Show directory structure
+        run: ls -R
 
-    - name: Show directory structure
-      run: ls -R
+      - name: Build with Maven
+        run: mvn clean package
+        working-directory: java-hello-world-with-maven
 
-    - name: Build with Maven
-      run: mvn clean package
-      working-directory: java-hello-world-with-maven
+  static-analysis:
+    name: Sonar + OWASP Check
+    runs-on: [self-hosted, Linux, X64]
+    needs: build
 
-      static-analysis:
-        name: Sonar + OWASP Check
-        runs-on: [self-hosted, Linux, X64]
-        needs: build
-      
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v4
-      
-          - name: SonarQube Scan
-            env:
-              SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            run: |
-              cd java-hello-world-with-maven
-              mvn sonar:sonar \
-                -Dsonar.projectKey=java-maven-ci \
-                -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-                -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-      
-          - name: OWASP Dependency Check
-            run: |
-              cd java-hello-world-with-maven
-              mkdir -p dependency-check
-              curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.10/dependency-check-9.0.10-release.zip
-              unzip -q dependency-check.zip -d dependency-check
-              dependency-check/dependency-check/bin/dependency-check.sh --project "java-maven-ci" --scan . --format "HTML"
-      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          cd java-hello-world-with-maven
+          mvn sonar:sonar \
+            -Dsonar.projectKey=java-maven-ci \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: OWASP Dependency Check
+        run: |
+          cd java-hello-world-with-maven
+          mkdir -p dependency-check
+          curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.10/dependency-check-9.0.10-release.zip
+          unzip -q dependency-check.zip -d dependency-check
+          dependency-check/dependency-check/bin/dependency-check.sh --project "java-maven-ci" --scan . --format "HTML"
+
+      - name: Upload OWASP Report (Optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: java-hello-world-with-maven/dependency-check/report.html
+
   image:
     name: Build & Scan Docker Image
     runs-on: [self-hosted, Linux, X64]
     needs: build
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Build Docker Image
-      run: sudo nerdctl build -t java-maven-app:latest .
+      - name: Build Docker Image
+        run: sudo nerdctl build -t java-maven-app:latest .
+        working-directory: java-hello-world-with-maven
 
-    - name: Trivy Scan Docker Image
-      run: trivy image java-maven-app:latest
+      - name: Trivy Scan Docker Image
+        run: trivy image java-maven-app:latest
 
-    - name: Docker Login
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Docker Login
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Docker Tag & Push
-      run: |
-        sudo nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
-        sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+      - name: Docker Tag & Push
+        run: |
+          sudo nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+          sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
 
   deploy:
     name: Deploy to Kubernetes
@@ -81,14 +87,14 @@ jobs:
     needs: image
 
     steps:
-    - name: Set up Kubeconfig
-      run: |
-        mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
-        chmod 600 $HOME/.kube/config
-        kubectl version --client
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          kubectl version --client
 
-    - name: Deploy Manifest
-      run: |
-        export KUBECONFIG=$HOME/.kube/config
-        kubectl apply -f manifest/
+      - name: Deploy Manifest
+        run: |
+          export KUBECONFIG=$HOME/.kube/config
+          kubectl apply -f manifest/
