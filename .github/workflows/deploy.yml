@@ -34,11 +34,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+    # - name: Set up JDK
+    #   uses: actions/setup-java@v3
+    #   with:
+    #     java-version: '17'
+    #     distribution: 'temurin'
 
     - name: SonarQube Scan
       env:
@@ -65,10 +65,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: java-build
+    # - name: Download Artifact
+    #   uses: actions/download-artifact@v3
+    #   with:
+    #     name: java-build
 
     - name: Build Docker Image
       run: sudo nerdctl build -t java-maven-app:latest .
