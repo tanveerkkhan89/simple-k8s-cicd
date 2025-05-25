@@ -52,35 +52,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Locate nerdctl binary
-        id: nerdctl-path
-        run: |
-          which nerdctl || command -v nerdctl
-
       - name: Debug sudo permissions and user
         run: |
           echo "Current user: $(whoami)"
           sudo -n true && echo "Passwordless sudo works" || echo "Password prompt required"
 
       - name: Build Docker Image
-        run: |
-          echo "Trying nerdctl with sudo..."
-          if ! sudo -n nerdctl build -t java-maven-app:latest .; then
-            echo "Falling back to direct nerdctl..."
-            nerdctl build -t java-maven-app:latest .
-          fi
+        run: sudo nerdctl build -t java-maven-app:latest .
         working-directory: java-hello-world-with-maven
 
       - name: Trivy Scan Docker Image
         run: trivy image java-maven-app:latest
 
       - name: Docker Login
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo -n nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Docker Tag & Push
         run: |
-          sudo -n nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
-          sudo -n nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+          sudo nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+          sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
 
   deploy:
     name: Deploy to Kubernetes
