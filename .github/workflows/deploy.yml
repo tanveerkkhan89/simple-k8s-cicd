@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker Image
-        run: sudo nerdctl build -t java-maven-app:latest .
+        run: nerdctl build -t java-maven-app:latest .
         working-directory: java-hello-world-with-maven
 
       - name: Trivy Scan Docker Image
@@ -64,8 +64,8 @@ jobs:
 
       - name: Docker Tag & Push
         run: |
-          sudo nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
-          sudo nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+          nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
+          nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
 
   deploy:
     name: Deploy to Kubernetes
