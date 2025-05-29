@@ -52,29 +52,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug sudo permissions and user
+      - name: Start BuildKit Daemon
         run: |
-          echo "Current user: $(whoami)"
-          sudo -n true && echo "Passwordless sudo works" || echo "Password prompt required"
+          echo "Starting buildkitd..."
+          nohup buildkitd > /tmp/buildkitd.log 2>&1 &
+          sleep 5
+          echo "BuildKit running..."
 
-      - name: Build Docker Image (Fallback without sudo)
+      - name: Build Docker Image with nerdctl (containerd)
         working-directory: java-hello-world-with-maven
         run: |
-          echo "Trying with sudo first..."
-          if ! sudo -n nerdctl build -t java-maven-app:latest .; then
-            echo "Falling back to non-sudo build..."
-            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-            nerdctl build -t java-maven-app:latest .
-          fi
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          nerdctl build -t java-maven-app:latest .
 
       - name: Trivy Scan Docker Image
         run: trivy image java-maven-app:latest
 
-      - name: Docker Login
+      - name: Login to Docker Registry (using nerdctl)
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | nerdctl login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Docker Tag & Push
+      - name: Push Docker Image
         run: |
           nerdctl tag java-maven-app:latest ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
           nerdctl push ${{ secrets.DOCKER_USERNAME }}/java-maven-app:latest
