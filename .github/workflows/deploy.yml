@@ -62,7 +62,7 @@ jobs:
       - name: Build Docker Image with nerdctl (containerd)
         working-directory: java-hello-world-with-maven
         run: |
-          nerdctl build --buildkit=false -t java-maven-app:latest .
+          nerdctl build -t java-maven-app:latest .
 
       - name: Trivy Scan Docker Image
         run: trivy image java-maven-app:latest
