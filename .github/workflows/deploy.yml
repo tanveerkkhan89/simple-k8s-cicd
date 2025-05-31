@@ -1,4 +1,3 @@
-tanveer@master:~/simple-k8s-cicd$ cat .github/workflows/deploy.yml
 name: Java Maven CI Pipeline
 
 on:
