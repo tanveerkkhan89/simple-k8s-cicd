@@ -82,7 +82,9 @@ jobs:
           chmod 600 $HOME/.kube/config
           kubectl version --client
 
-      - name: Deploy Manifest
+      - name: Apply Kubernetes manifests
         run: |
-          export KUBECONFIG=$HOME/.kube/config
-          kubectl apply -f manifest/
+          kubectl apply -f manifest/deployment.yaml --validate=false
+          kubectl apply -f manifest/service.yaml --validate=false
+        env:
+          KUBECONFIG: $HOME/.kube/config
