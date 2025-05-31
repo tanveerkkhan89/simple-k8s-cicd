@@ -12,8 +12,8 @@ spec:
       labels:
         app: java-maven-app
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: master
+      #nodeSelector:
+      #  kubernetes.io/hostname: master
       containers:
       - name: web
         image: khatanve/java-maven-app:latest
