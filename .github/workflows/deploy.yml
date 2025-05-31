@@ -60,7 +60,7 @@ jobs:
           echo "BuildKit running..."
 
       - name: Build Docker Image with nerdctl (containerd)
-        working-directory: java-hello-world-with-maven
+        working-directory: simple-k8s-cicd
         run: |
           podman build -t java-maven-app:latest .
 
