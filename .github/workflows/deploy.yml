@@ -1,3 +1,4 @@
+tanveer@master:~/simple-k8s-cicd$ cat .github/workflows/deploy.yml
 name: Java Maven CI Pipeline
 
 on:
@@ -62,8 +63,7 @@ jobs:
       - name: Build Docker Image with nerdctl (containerd)
         working-directory: java-hello-world-with-maven
         run: |
-          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-          nerdctl build -t java-maven-app:latest .
+          nerdctl --no-pull --debug build --buildkit=false -t java-maven-app:latest .
 
       - name: Trivy Scan Docker Image
         run: trivy image java-maven-app:latest
