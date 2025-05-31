@@ -82,9 +82,20 @@ jobs:
           chmod 600 $HOME/.kube/config
           kubectl version --client
 
-      - name: Apply Kubernetes manifests
+ 
+      - name: Check Kubeconfig and Cluster Access
         run: |
-          kubectl apply -f manifest/deployment.yaml --validate=false
-          kubectl apply -f manifest/service.yaml --validate=false
+         echo "KUBECONFIG is set to: $KUBECONFIG"
+         ls -la $KUBECONFIG
+         kubectl config view
+         kubectl cluster-info
         env:
-          KUBECONFIG: $HOME/.kube/config
+          KUBECONFIG: /home/runner/.kube/config
+
+
+     - name: Apply Kubernetes manifests
+       run: |
+         kubectl apply -f manifest/deployment.yaml --validate=false
+         kubectl apply -f manifest/service.yaml --validate=false
+       env:
+         KUBECONFIG: /home/runner/.kube/config
